@@ -80,6 +80,26 @@ padding:10px;
 border-radius:10px;
 }
 
+.barra{
+height:20px;
+background:#ddd;
+border-radius:10px;
+overflow:hidden;
+margin-top:5px;
+}
+
+.progresoFavor{
+height:100%;
+background:#4CAF50;
+width:0%;
+}
+
+.progresoContra{
+height:100%;
+background:#e74c3c;
+width:0%;
+}
+
 </style>
 
 </head>
@@ -99,34 +119,101 @@ border-radius:10px;
 </div>
 
 <label><b>¿Por qué?</b></label>
-<textarea rows="3" placeholder="Escribe tu opinión..."></textarea>
+<textarea id="porque" rows="3"></textarea>
 
 <label><b>¿Qué crees que pasaría si esto sucede?</b></label>
-<textarea rows="3" placeholder="Tu respuesta..."></textarea>
+<textarea id="pasaria" rows="3"></textarea>
+
+<button onclick="enviarEncuesta()">Enviar respuesta</button>
 
 <div class="resultados">
+
 <p>👍 A favor: <span id="favor">0</span></p>
+
+<div class="barra">
+<div class="progresoFavor" id="barraFavor"></div>
+</div>
+
 <p>👎 En contra: <span id="contra">0</span></p>
+
+<div class="barra">
+<div class="progresoContra" id="barraContra"></div>
+</div>
+
 </div>
 
 </div>
 
 <script>
 
-let votosFavor = 0;
-let votosContra = 0;
+const scriptURL = "https://script.google.com/macros/s/AKfycbyT7kSyqeVbuKBTDbOc_cgjsymCxKpR1OWzA-SKygHM26O_808Gf0QFD5S7ZZRhMspOqw/exec";
+
+let votosFavor = localStorage.getItem("favor") || 0;
+let votosContra = localStorage.getItem("contra") || 0;
+
+let votoUsuario = localStorage.getItem("votoUsuario");
+
+document.getElementById("favor").textContent = votosFavor;
+document.getElementById("contra").textContent = votosContra;
+
+actualizarGrafica();
 
 function votar(tipo){
 
+if(votoUsuario){
+alert("Ya votaste en esta encuesta");
+return;
+}
+
 if(tipo === "favor"){
 votosFavor++;
-document.getElementById("favor").textContent = votosFavor;
+localStorage.setItem("favor", votosFavor);
+localStorage.setItem("votoUsuario","favor");
 }
 
 if(tipo === "contra"){
 votosContra++;
-document.getElementById("contra").textContent = votosContra;
+localStorage.setItem("contra", votosContra);
+localStorage.setItem("votoUsuario","contra");
 }
+
+document.getElementById("favor").textContent = votosFavor;
+document.getElementById("contra").textContent = votosContra;
+
+actualizarGrafica();
+
+}
+
+function actualizarGrafica(){
+
+let total = Number(votosFavor) + Number(votosContra);
+
+if(total === 0) return;
+
+let porcentajeFavor = (votosFavor / total) * 100;
+let porcentajeContra = (votosContra / total) * 100;
+
+document.getElementById("barraFavor").style.width = porcentajeFavor + "%";
+document.getElementById("barraContra").style.width = porcentajeContra + "%";
+
+}
+
+function enviarEncuesta(){
+
+const opinion = localStorage.getItem("votoUsuario");
+const porque = document.getElementById("porque").value;
+const pasaria = document.getElementById("pasaria").value;
+
+fetch(scriptURL, {
+method: "POST",
+body: JSON.stringify({
+opinion: opinion,
+porque: porque,
+pasaria: pasaria
+})
+})
+.then(res => alert("Respuesta enviada"))
+.catch(err => alert("Error al enviar"));
 
 }
 
